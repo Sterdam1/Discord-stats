@@ -21,6 +21,8 @@ async def on_voice_state_update(member, before, after):
     after_channel_name = after.channel.name if after.channel else 'None'
 
     if before.channel is None and after.channel is not None:
+        guild = client.get_guild(1031866926852477039)
+        print(guild)
         print(f"{member.display_name} зашел в {after_channel_name}")
         # Логика для обработки инфо о пользователях и куда они зашли
     elif before.channel is not None and after.channel is None:

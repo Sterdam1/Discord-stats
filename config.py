@@ -7,8 +7,13 @@ class DbSettings(BaseSettings):
         env_file_encoding='utf-8',
         extra='ignore'
     )
+    
+    username: str = Field('username', alias='DB_USERNAME')
+    password: str = Field('password', alias='DB_PASSWORD')
+    host: str = Field('host', alias='DB_HOST')
+    database: str = Field('database', alias='DB_DATABASE')
+    port: str = Field('port', alias="DB_PORT")
 
-    host: str = Field('def_host', alias='DB_HOST')
         
 class Settings(BaseSettings):
     model_config = SettingsConfigDict(
@@ -20,8 +25,10 @@ class Settings(BaseSettings):
     bot_token: str = Field('bot_token', alias='BOT_TOKEN')
     # tg_token: str = Field('tg_token', alias='TG_TOKEN')
 
-    # db_settings: DbSettings = Field(default_factory=DbSettings)
+    db: DbSettings = Field(default_factory=DbSettings)
     
 settings = Settings()
 
+
 # print(settings)
+# print(settings.db.username)
