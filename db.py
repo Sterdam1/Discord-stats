@@ -16,7 +16,7 @@ async def create_table():
         CREATE TABLE IF NOT EXISTS servers (
         id SERIAL PRIMARY KEY,
         name TEXT,
-        server_dc_id INTEGER,
+        server_dc_id BIGINT,
         members INTEGER,
         is_gathering_stats BOOLEAN
         )
@@ -26,7 +26,7 @@ async def create_table():
     table_users = await conn.execute("""
         CREATE TABLE IF NOT EXISTS users (
         id SERIAL PRIMARY KEY,
-        user_dc_id INTEGER,
+        user_dc_id BIGINT,
         username TEXT,
         last_join_vc TIMESTAMP,
         join_server DATE,
@@ -91,25 +91,29 @@ async def start_gathering(name, server_dc_id, members, is_gathering_stats):
                                  database=settings.db.database, 
                                  port=settings.db.port)
     
-    some_sql = await conn.execute(f"""
+    try:
+        sql_str = f"""
         DO $$
         BEGIN
-            IF NOT EXISTS (SELECT 1 FROM servers WHERE server_dc_id = 1231231) THEN
+            IF NOT EXISTS (SELECT 1 FROM servers WHERE server_dc_id = {server_dc_id}) THEN
                 INSERT INTO servers (name, server_dc_id, members, is_gathering_stats)
-                VALUES ({name}, {server_dc_id}, {members}, {is_gathering_stats});
+                VALUES ('{name}', {server_dc_id}, {members}, {is_gathering_stats});
             ELSE
                 UPDATE servers
-                SET is_gathering_stats = True;   
+                SET is_gathering_stats = {is_gathering_stats};   
             END IF;
         END $$;
-    """)
+    """
+        some_sql = await conn.execute(sql_str)
+    except Exception as e:
+        print(e)
+    
+
+    some_sql = await conn.fetch("""SELECT * FROM servers""")
+    print(some_sql)
 
     await conn.close()
 
-    # some_sql = await conn.fetch("""SELECT * FROM servers""")
-    # print(some_sql)
-
-    # return some_sql
 
 async def stop_gathering(server_dc_id):
     conn = await asyncpg.connect(user=settings.db.username, 
@@ -120,8 +124,8 @@ async def stop_gathering(server_dc_id):
 
     some_sql = await conn.execute(f"""
         UPDATE servers
-        SET is_gathering_stats = {False}
-        WHERE server_dc_id = {server_dc_id}
+        SET is_gathering_stats = False
+        WHERE server_dc_id = {server_dc_id};
     """)   
 
     some_sql = await conn.fetch("""SELECT * FROM servers""")
@@ -158,11 +162,12 @@ async def admin_truncate_table(table):
 
     print(some_sql)
 
-loop = asyncio.new_event_loop()
-loop.run_until_complete(admin_truncate_table('servers'))
-# loop.run_until_complete(insert_server())
+# loop = asyncio.new_event_loop()
+# loop.run_until_complete(admin_truncate_table('servers'))
 # loop.run_until_complete(stop_gathering(1231231))
 
-# loop.run_until_complete(delete_table('user_stats'))
-# loop.run_until_complete(delete_table('users'))
-# loop.run_until_complete(delete_table('servers'))
+# loop.run_until_complete(admin_delete_table('user_stats'))
+# loop.run_until_complete(admin_delete_table('users'))
+# loop.run_until_complete(admin_delete_table('servers'))
+# loop.run_until_complete(create_table())
+
